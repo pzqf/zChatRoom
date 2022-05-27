@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -11,6 +10,9 @@ import (
 	"zChatRoom/ChatServer/playerMgr"
 	"zChatRoom/ChatServer/room"
 	"zChatRoom/proto"
+
+	"github.com/pzqf/zEngine/zLog"
+	"go.uber.org/zap"
 
 	"github.com/pzqf/zUtil/zKeyWordFilter"
 
@@ -75,7 +77,7 @@ func PlayerLogin(session *zNet.Session, packet *zNet.NetPacket) {
 	}
 	playerMgr.AddPlayer(&newPlayer)
 
-	fmt.Println("AddPlayer ok:", newPlayer.Id)
+	zLog.Info("Add new Player", zap.String("id", newPlayer.Id))
 
 	_ = session.Send(proto.PlayerLogin, resData)
 
@@ -164,7 +166,8 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	})
 
 	_ = session.Send(proto.PlayerEnterRoom, resData)
-	fmt.Println("玩家", p.Name, "进入房间", reqData.RoomId, "成功")
+	//fmt.Println("玩家", p.Name, "进入房间", reqData.RoomId, "成功")
+	zLog.Info("Player enter room", zap.String("id", p.Id), zap.String("name", p.Name), zap.Int32("room_id", reqData.RoomId))
 
 	time.Sleep(10 * time.Millisecond)
 	r.UpdateRoomPlayerList()

@@ -10,6 +10,9 @@ import (
 	"zChatRoom/ChatServer/segmenter"
 	"zChatRoom/proto"
 
+	"github.com/pzqf/zEngine/zLog"
+	"go.uber.org/zap"
+
 	"github.com/pzqf/zUtil/zMap"
 	"github.com/pzqf/zUtil/zQueue"
 )
@@ -88,6 +91,8 @@ func (r *Room) UpdateRoomPlayerList() {
 
 func (r *Room) NewSpeak(chatMsg proto.ChatMessage) error {
 	//log.Println("玩家", chatMsg.Name, "在房间", r.Id, "发言:", chatMsg.Content)
+	zLog.Info("Player speak", zap.String("name", chatMsg.Name),
+		zap.Int32("room_id", r.Id), zap.String("content", chatMsg.Content))
 
 	r.HistoryChatQueue.Enqueue(chatMsg)
 	if r.HistoryChatQueue.Length() > maxHistoryChatCount {

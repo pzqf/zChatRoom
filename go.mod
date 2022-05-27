@@ -8,6 +8,7 @@ require (
 	github.com/pzqf/zEngine v0.0.0-20220523022722-0fdda0ead5ca
 	github.com/pzqf/zUtil v0.0.0-20220523024940-591ea7ecef80
 	github.com/satori/go.uuid v1.2.0
+	go.uber.org/zap v1.21.0
 )
 
 require (
@@ -15,7 +16,10 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/panjf2000/ants v1.3.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
 
 //replace github.com/pzqf/zEngine => ../zEngine
