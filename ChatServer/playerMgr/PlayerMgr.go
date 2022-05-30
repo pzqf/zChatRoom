@@ -3,6 +3,7 @@ package playerMgr
 import (
 	"errors"
 	"fmt"
+	"time"
 	"zChatRoom/ChatServer/player"
 	"zChatRoom/ChatServer/room"
 
@@ -19,6 +20,12 @@ var mgr *Mgr
 
 func InitDefaultPlayerMgr() {
 	mgr = &Mgr{}
+	go func() {
+		for true {
+			fmt.Println(time.Now(), "online player count:", mgr.PlayerList.Len())
+			time.Sleep(time.Second * 2)
+		}
+	}()
 }
 
 func CheckPlayerName(name string) error {

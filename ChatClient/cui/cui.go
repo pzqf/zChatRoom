@@ -77,8 +77,10 @@ func ShowRoomUi(roomList []string) {
 var c *ChatUi
 
 func ShowChatUi() {
-	c = NewChat(G)
-	_ = c.Show()
+	if c == nil {
+		c = NewChat(G)
+		_ = c.Show()
+	}
 	LastView = ViewTitleInput
 }
 
@@ -88,5 +90,9 @@ func ShowDialog(str string, dt DialogType) {
 }
 
 func GetChatUi() *ChatUi {
+	if c == nil {
+		c = NewChat(G)
+		_ = c.Show()
+	}
 	return c
 }

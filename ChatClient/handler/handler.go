@@ -151,6 +151,7 @@ func RoomPlayerListRes(session *zNet.Session, packet *zNet.NetPacket) {
 	}
 
 	time.Sleep(10 * time.Millisecond)
+
 	cui.GetChatUi().ShowPlayerList(list)
 }
 

@@ -10,8 +10,7 @@ import (
 	"zChatRoom/ChatServer/segmenter"
 	"zChatRoom/proto"
 
-	"github.com/pzqf/zEngine/zLog"
-	"go.uber.org/zap"
+	"github.com/pzqf/zUtil/zList"
 
 	"github.com/pzqf/zUtil/zMap"
 	"github.com/pzqf/zUtil/zQueue"
@@ -25,13 +24,33 @@ type Room struct {
 	PlayerList       zMap.Map
 	HistoryChatQueue zQueue.Queue
 	wordCount        zMap.Map
+	ticker           *time.Ticker
 }
 
 func NewRoom(id int32) *Room {
-	return &Room{
-		Id:   id,
-		Name: fmt.Sprintf("room_%d", id),
+	r := &Room{
+		Id:     id,
+		Name:   fmt.Sprintf("room_%d", id),
+		ticker: time.NewTicker(60 * time.Second),
 	}
+
+	go func() {
+		for range r.ticker.C {
+			r.wordCount.Range(func(key, value interface{}) bool {
+				wordList := value.(*zList.List)
+				wordList.Range(func(e *list.Element, value any) bool {
+					if time.Now().Sub(e.Value.(time.Time)).Seconds() > 10*60 {
+						wordList.Remove(e)
+					}
+					return true
+				})
+				return true
+			})
+
+		}
+	}()
+
+	return r
 }
 
 func (r *Room) AddPlayer(p *player.Player) error {
@@ -91,8 +110,8 @@ func (r *Room) UpdateRoomPlayerList() {
 
 func (r *Room) NewSpeak(chatMsg proto.ChatMessage) error {
 	//log.Println("玩家", chatMsg.Name, "在房间", r.Id, "发言:", chatMsg.Content)
-	zLog.Info("Player speak", zap.String("name", chatMsg.Name),
-		zap.Int32("room_id", r.Id), zap.String("content", chatMsg.Content))
+	//zLog.Info("Player speak", zap.String("name", chatMsg.Name),
+	//	zap.Int32("room_id", r.Id), zap.String("content", chatMsg.Content))
 
 	r.HistoryChatQueue.Enqueue(chatMsg)
 	if r.HistoryChatQueue.Length() > maxHistoryChatCount {
@@ -104,24 +123,11 @@ func (r *Room) NewSpeak(chatMsg proto.ChatMessage) error {
 	wordSlice := segmenter.Segment(chatMsg.Content)
 	for _, word := range wordSlice {
 		if _, ok := r.wordCount.Get(word); !ok {
-			//r.wordCount[word] = &list.List{}
-			r.wordCount.Store(word, &list.List{})
+			r.wordCount.Store(word, zList.New())
 		}
 		l, _ := r.wordCount.Get(word)
-		l.(*list.List).PushBack(time.Now())
+		l.(*zList.List).PushBack(time.Now())
 	}
-
-	r.wordCount.Range(func(key, value interface{}) bool {
-		wordList := value.(*list.List)
-		var n *list.Element
-		for e := wordList.Front(); e != nil; e = n {
-			n = e.Next()
-			if time.Now().Sub(e.Value.(time.Time)).Seconds() > 10*60 {
-				wordList.Remove(e)
-			}
-		}
-		return true
-	})
 
 	return nil
 }
@@ -137,23 +143,13 @@ func (r *Room) BroadcastChatMsg(chatMsg proto.ChatMessage) {
 }
 
 func (r *Room) GetHighWord() string {
-	r.wordCount.Range(func(key, value interface{}) bool {
-		wordList := value.(*list.List)
-		var n *list.Element
-		for e := wordList.Front(); e != nil; e = n {
-			n = e.Next()
-			if time.Now().Sub(e.Value.(time.Time)).Seconds() > 10*60 {
-				wordList.Remove(e)
-			}
-		}
-		return true
-	})
-
+	fmt.Println("GetHighWord", r.wordCount.Len())
 	highWord := ""
 	MaxCount := 0
 
 	r.wordCount.Range(func(key, value interface{}) bool {
-		wordList := value.(*list.List)
+		wordList := value.(*zList.List)
+		fmt.Println(key, wordList.Len())
 		if wordList.Len() > MaxCount {
 			highWord = key.(string)
 			MaxCount = wordList.Len()
