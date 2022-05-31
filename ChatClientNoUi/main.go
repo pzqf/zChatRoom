@@ -15,8 +15,8 @@ import (
 )
 
 func main() {
-	address := flag.String("a", "127.0.0.1", "server address")
-	count := flag.Int("n", 100, "client count")
+	address := flag.String("a", "192.168.50.16", "server address")
+	count := flag.Int("n", 1000, "client count")
 	flag.Parse()
 	handler.Init()
 	clientCount := *count

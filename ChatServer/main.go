@@ -43,7 +43,7 @@ func main() {
 	playerMgr.InitDefaultPlayerMgr()
 	zLog.Info("player manager init success")
 
-	maxRoomCount := int32(3)
+	maxRoomCount := int32(10)
 	room.InitDefaultRoomMgr(maxRoomCount)
 	zLog.Info("room manager init success", zap.Int32("maxRoomCount", maxRoomCount))
 
@@ -51,12 +51,12 @@ func main() {
 		zNet.WithMaxClientCount(10000),
 		zNet.WithSidInitio(10000),
 		zNet.WithPacketCodeType(zNet.PacketCodeJson),
-		zNet.WithMaxPacketDataSize(4096*2*2),
+		zNet.WithMaxPacketDataSize(zNet.MaxNetPacketDataSize),
 		zNet.WithDispatcherPoolSize(3000),
 	)
 	zNet.GetDefaultTcpServer().SetRemoveSessionCallBack(playerMgr.OnSessionClose)
 	zLog.Info("tcp server init success", zap.Int("maxClientCount", 10000),
-		zap.Int("MaxNetPacketDataSize", zNet.MaxNetPacketDataSize),
+		zap.Int32("MaxNetPacketDataSize", zNet.MaxNetPacketDataSize),
 		zap.Int("PacketCodeType", int(zNet.PacketCodeJson)),
 	)
 

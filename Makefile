@@ -7,3 +7,9 @@ linux:
 win:
 	mkdir -p bin/ &&env GOOS=windows GOARCH=amd64 go build  -o ./bin/chat_server.exe ./ChatServer/main.go
 	mkdir -p bin/ &&env GOOS=windows GOARCH=amd64 go build  -o ./bin/chat_client.exe ./ChatClient/main.go
+
+
+.PHONY: robot
+robot:
+	mkdir -p bin/ &&env GOOS=windows GOARCH=amd64 go build  -o ./bin/chat_robot.exe ./ChatClientNoUi/main.go
+	mkdir -p bin/ &&env GOOS=linux GOARCH=amd64 go build  -o ./bin/chat_robot ./ChatClientNoUi/main.go

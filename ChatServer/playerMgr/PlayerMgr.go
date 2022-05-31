@@ -23,7 +23,7 @@ func InitDefaultPlayerMgr() {
 	go func() {
 		for true {
 			fmt.Println(time.Now(), "online player count:", mgr.PlayerList.Len())
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second * 5)
 		}
 	}()
 }

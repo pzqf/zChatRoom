@@ -176,7 +176,7 @@ func PlayerEnterRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
 		return
 	}
 
-	//todo 开始自动聊天
+	//开始自动聊天
 	for {
 		rand.Seed(time.Now().UnixNano())
 		index := rand.Intn(len(contentList) - 1)
@@ -188,7 +188,7 @@ func PlayerEnterRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
 			return
 		}
 
-		time.Sleep(time.Second * 3)
+		time.Sleep(time.Second * 10)
 	}
 }
 
@@ -235,8 +235,11 @@ func RoomListRes(session *zNet.Session, packet *zNet.NetPacket) {
 	}
 	//cui.ShowRoomUi(list)
 
+	rand.Seed(time.Now().UnixNano())
+	index := rand.Intn(len(data.RoomList) - 1)
+
 	err = session.Send(proto.PlayerEnterRoom, &proto.PlayerEnterRoomReq{
-		RoomId: data.RoomList[0].Id,
+		RoomId: data.RoomList[index].Id,
 	})
 	if err != nil {
 		fmt.Println(err)
