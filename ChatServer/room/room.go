@@ -24,18 +24,16 @@ type Room struct {
 	PlayerList       zMap.Map
 	HistoryChatQueue zQueue.Queue
 	wordCount        zMap.Map
-	ticker           *time.Ticker
 }
 
 func NewRoom(id int32) *Room {
 	r := &Room{
-		Id:     id,
-		Name:   fmt.Sprintf("room_%d", id),
-		ticker: time.NewTicker(60 * time.Second),
+		Id:   id,
+		Name: fmt.Sprintf("room_%d", id),
 	}
-
+	ticker := time.NewTicker(60 * time.Second)
 	go func() {
-		for range r.ticker.C {
+		for range ticker.C {
 			r.wordCount.Range(func(key, value interface{}) bool {
 				wordList := value.(*zList.List)
 				wordList.Range(func(e *list.Element, value any) bool {
@@ -46,6 +44,13 @@ func NewRoom(id int32) *Room {
 				})
 				return true
 			})
+
+		}
+	}()
+
+	ticker2 := time.NewTicker(time.Second)
+	go func() {
+		for range ticker2.C {
 			r.UpdateRoomPlayerList()
 		}
 	}()
@@ -55,7 +60,7 @@ func NewRoom(id int32) *Room {
 
 func (r *Room) AddPlayer(p *player.Player) error {
 	r.PlayerList.Store(p.Id, p)
-	r.UpdateRoomPlayerList()
+	//r.UpdateRoomPlayerList()
 
 	return nil
 }
@@ -67,7 +72,7 @@ func (r *Room) DelPlayer(uid string) error {
 	}
 	name := p.(*player.Player).Name
 	r.PlayerList.Delete(uid)
-	r.UpdateRoomPlayerList()
+	//r.UpdateRoomPlayerList()
 	log.Println("player", name, "left", r.Name, r.Id)
 	chatMsg := proto.ChatMessage{
 		Content: name + " left room",

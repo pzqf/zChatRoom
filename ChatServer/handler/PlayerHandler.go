@@ -170,7 +170,7 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	zLog.Info("Player enter room", zap.String("id", p.Id), zap.String("name", p.Name), zap.Int32("room_id", reqData.RoomId))
 
 	time.Sleep(10 * time.Millisecond)
-	r.UpdateRoomPlayerList()
+	//r.UpdateRoomPlayerList()
 }
 
 func PlayerLeaveRoom(session *zNet.Session, packet *zNet.NetPacket) {
@@ -212,7 +212,7 @@ func PlayerLeaveRoom(session *zNet.Session, packet *zNet.NetPacket) {
 
 	_ = session.Send(proto.PlayerLeaveRoom, resData)
 
-	r.UpdateRoomPlayerList()
+	//r.UpdateRoomPlayerList()
 }
 
 func PlayerSpeak(session *zNet.Session, packet *zNet.NetPacket) {
