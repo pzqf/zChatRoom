@@ -46,7 +46,7 @@ func NewRoom(id int32) *Room {
 				})
 				return true
 			})
-
+			r.UpdateRoomPlayerList()
 		}
 	}()
 

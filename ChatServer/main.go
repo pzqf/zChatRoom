@@ -43,7 +43,7 @@ func main() {
 	playerMgr.InitDefaultPlayerMgr()
 	zLog.Info("player manager init success")
 
-	maxRoomCount := int32(10)
+	maxRoomCount := int32(5)
 	room.InitDefaultRoomMgr(maxRoomCount)
 	zLog.Info("room manager init success", zap.Int32("maxRoomCount", maxRoomCount))
 

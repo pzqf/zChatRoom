@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
+	"time"
 	"zChatRoom/ChatClient/model"
 
 	"github.com/jroimartin/gocui"
@@ -26,12 +28,14 @@ type ChatUi struct {
 	gui       *gocui.Gui
 	lastMsg   []string
 	lastIndex int
+	mu        sync.Mutex
 }
 
 func NewChat(g *gocui.Gui) *ChatUi {
 	return &ChatUi{
 		gui:       g,
 		lastIndex: 0,
+		mu:        sync.Mutex{},
 	}
 }
 
@@ -184,6 +188,8 @@ func (u *ChatUi) arrowDown(g *gocui.Gui, iv *gocui.View) error {
 }
 
 func (u *ChatUi) SpeakBroadcast(content string) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
 	historyView, err := u.gui.View(ViewTitleHistory)
 	if err != nil {
 		return
@@ -201,6 +207,9 @@ func (u *ChatUi) OnSpeak(content string) {
 }
 
 func (u *ChatUi) ShowPlayerList(list []string) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	time.Sleep(time.Second)
 	listPlayerView, err := u.gui.View(ViewTitleListPlayer)
 	if err != nil {
 		return
