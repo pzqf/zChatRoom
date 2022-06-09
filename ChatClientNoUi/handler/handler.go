@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -150,9 +151,10 @@ func Init() {
 	}
 }
 
-func PlayerLoginRes(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLoginRes(session zNet.Session, protoId int32, d []byte) {
 	var data proto.PlayerLoginRes
-	err := packet.DecodeData(&data)
+	//err := packet.DecodeData(&data)
+	err := json.Unmarshal(d, &data)
 	if err != nil {
 		return
 	}
@@ -163,11 +165,12 @@ func PlayerLoginRes(session *zNet.Session, packet *zNet.NetPacket) {
 	fmt.Println("登录成功")
 }
 
-func PlayerLogoutRes(session *zNet.Session, packet *zNet.NetPacket) {}
+func PlayerLogoutRes(session zNet.Session, protoId int32, d []byte) {}
 
-func PlayerEnterRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerEnterRoomRes(session zNet.Session, protoId int32, d []byte) {
 	var data proto.PlayerEnterRoomRes
-	err := packet.DecodeData(&data)
+	//err := packet.DecodeData(&data)
+	err := json.Unmarshal(d, &data)
 	if err != nil {
 		return
 	}
@@ -180,35 +183,36 @@ func PlayerEnterRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
 	for {
 		rand.Seed(time.Now().UnixNano())
 		index := rand.Intn(len(contentList) - 1)
-		err := session.Send(proto.PlayerSpeak, &proto.PlayerSpeakReq{
+		req, _ := json.Marshal(proto.PlayerSpeakReq{
 			Content: contentList[index],
 		})
+		err := session.Send(proto.PlayerSpeak, req)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 30)
 	}
 }
 
-func PlayerLeaveRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLeaveRoomRes(session zNet.Session, protoId int32, d []byte) {
 
 	log.Println("离开房间成功")
 }
 
-func PlayerSpeakRes(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerSpeakRes(session zNet.Session, protoId int32, d []byte) {
 	var data proto.PlayerSpeakRes
-	_ = packet.DecodeData(&data)
+	//_ = packet.DecodeData(&data)
+	_ = json.Unmarshal(d, &data)
 	if data.Code != proto.ErrNil {
 		return
 	}
-	log.Println("离开房间成功")
 }
 
-func SpeakBroadcast(session *zNet.Session, packet *zNet.NetPacket) {
+func SpeakBroadcast(session zNet.Session, protoId int32, d []byte) {
 	var data proto.ChatMessage
-	err := packet.DecodeData(&data)
+	err := json.Unmarshal(d, &data)
 	if err != nil {
 		return
 	}
@@ -216,9 +220,10 @@ func SpeakBroadcast(session *zNet.Session, packet *zNet.NetPacket) {
 	//fmt.Println(formatSpeakContent(data))
 }
 
-func RoomListRes(session *zNet.Session, packet *zNet.NetPacket) {
+func RoomListRes(session zNet.Session, protoId int32, d []byte) {
 	var data proto.RoomListRes
-	err := packet.DecodeData(&data)
+	//err := packet.DecodeData(&data)
+	err := json.Unmarshal(d, &data)
 	if err != nil {
 		return
 	}
@@ -238,18 +243,21 @@ func RoomListRes(session *zNet.Session, packet *zNet.NetPacket) {
 	rand.Seed(time.Now().UnixNano())
 	index := rand.Intn(len(data.RoomList) - 1)
 
-	err = session.Send(proto.PlayerEnterRoom, &proto.PlayerEnterRoomReq{
+	req, _ := json.Marshal(proto.PlayerEnterRoomReq{
 		RoomId: data.RoomList[index].Id,
 	})
+
+	err = session.Send(proto.PlayerEnterRoom, req)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 }
 
-func RoomPlayerListRes(session *zNet.Session, packet *zNet.NetPacket) {
+func RoomPlayerListRes(session zNet.Session, protoId int32, d []byte) {
 	var data proto.RoomPlayerListRes
-	err := packet.DecodeData(&data)
+	//err := packet.DecodeData(&data)
+	err := json.Unmarshal(d, &data)
 	if err != nil {
 		return
 	}

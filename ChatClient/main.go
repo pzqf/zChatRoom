@@ -14,10 +14,10 @@ func main() {
 	address := flag.String("a", "127.0.0.1", "server address")
 	flag.Parse()
 	handler.Init()
-	zNet.InitPacket(zNet.PacketCodeJson, zNet.MaxNetPacketDataSize)
+	zNet.InitPacket(zNet.DefaultPacketDataSize)
 	var cli = zNet.TcpClient{}
 	fmt.Println("connect to server", *address)
-	err := cli.ConnectToServer(*address, 9106)
+	err := cli.ConnectToServer(*address, 9160, "", 30)
 	if err != nil {
 		fmt.Printf("Connect:, err:%s \n", err.Error())
 		return

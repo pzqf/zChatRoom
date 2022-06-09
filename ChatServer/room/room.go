@@ -2,6 +2,7 @@ package room
 
 import (
 	"container/list"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -108,7 +109,9 @@ func (r *Room) UpdateRoomPlayerList() {
 
 	r.PlayerList.Range(func(key, value interface{}) bool {
 		p := value.(*player.Player)
-		_ = p.Session.Send(proto.RoomPlayerList, resPlayerData)
+		d, _ := json.Marshal(resPlayerData)
+		_ = p.Session.Send(proto.RoomPlayerList, d)
+		//_ = p.Session.Send(proto.RoomPlayerList, resPlayerData)
 		return true
 	})
 }
@@ -141,7 +144,9 @@ func (r *Room) BroadcastChatMsg(chatMsg proto.ChatMessage) {
 	r.PlayerList.Range(func(key, value interface{}) bool {
 		p := value.(*player.Player)
 		if p.Session != nil {
-			p.Session.Send(proto.SpeakBroadcast, chatMsg)
+			//p.Session.Send(proto.SpeakBroadcast, chatMsg)
+			d, _ := json.Marshal(chatMsg)
+			_ = p.Session.Send(proto.SpeakBroadcast, d)
 		}
 		return true
 	})

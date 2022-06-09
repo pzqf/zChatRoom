@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -47,106 +48,134 @@ func Init() {
 		log.Printf("RegisterHandler error %d", err)
 		return
 	}
+	if err := zNet.RegisterHandler(proto.TestPing, TestPingRes); err != nil {
+		log.Printf("RegisterHandler error %d", err)
+		return
+	}
 }
 
-func PlayerLoginRes(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.PlayerLoginRes
-	err := packet.DecodeData(&data)
+func PlayerLoginRes(session zNet.Session, protoId int32, data []byte) {
+	var d proto.PlayerLoginRes
+	err := json.Unmarshal(data, &d)
+	//err := packet.DecodeData(&data)
 	if err != nil {
 		return
 	}
 
-	if data.Code != proto.ErrNil {
+	if d.Code != proto.ErrNil {
 		cui.ShowLoginUi()
-		cui.ShowDialog(data.Message, cui.DialogTypeError)
+		cui.ShowDialog(d.Message, cui.DialogTypeError)
 		return
 	}
 }
 
-func PlayerLogoutRes(session *zNet.Session, packet *zNet.NetPacket) {}
+func PlayerLogoutRes(session zNet.Session, protoId int32, data []byte) {}
 
-func PlayerEnterRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.PlayerEnterRoomRes
-	err := packet.DecodeData(&data)
+func PlayerEnterRoomRes(session zNet.Session, protoId int32, data []byte) {
+	var d proto.PlayerEnterRoomRes
+	err := json.Unmarshal(data, &d)
 	if err != nil {
 		return
 	}
 
-	if data.Code != proto.ErrNil {
-		cui.ShowDialog(data.Message, cui.DialogTypeError)
+	if d.Code != proto.ErrNil {
+		cui.ShowDialog(d.Message, cui.DialogTypeError)
 		return
 	}
 
 	cui.ShowChatUi()
-	for _, v := range data.ChatHistoryList {
+	for _, v := range d.ChatHistoryList {
 		cui.GetChatUi().SpeakBroadcast(formatSpeakContent(v))
 	}
 	cui.G.Update(func(gui *gocui.Gui) error {
 		return nil
 	})
+
+	go func() {
+		for true {
+			sendData, err := json.Marshal(proto.TestPingReq{
+				Time: time.Now(),
+			})
+			if err != nil {
+				return
+			}
+			err = session.Send(proto.TestPing, sendData)
+			if err != nil {
+				return
+			}
+			time.Sleep(3 * time.Second)
+		}
+	}()
 }
 
-func PlayerLeaveRoomRes(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLeaveRoomRes(session zNet.Session, protoId int32, data []byte) {
 
 	log.Println("离开房间成功")
 }
 
-func PlayerSpeakRes(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.PlayerSpeakRes
-	_ = packet.DecodeData(&data)
-	if data.Code != proto.ErrNil {
-		cui.ShowDialog(data.Message, cui.DialogTypeError)
+func PlayerSpeakRes(session zNet.Session, protoId int32, data []byte) {
+	var d proto.PlayerSpeakRes
+	err := json.Unmarshal(data, &d)
+	if err != nil {
 		return
 	}
-	log.Println("离开房间成功")
+	if d.Code != proto.ErrNil {
+		cui.ShowDialog(d.Message, cui.DialogTypeError)
+		return
+	}
 }
 
-func SpeakBroadcast(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.ChatMessage
-	err := packet.DecodeData(&data)
+func SpeakBroadcast(session zNet.Session, protoId int32, data []byte) {
+	//var data proto.ChatMessage
+	var d proto.ChatMessage
+	err := json.Unmarshal(data, &d)
+	//err := packet.DecodeData(&data)
 	if err != nil {
 		//log.Println(err)
 		cui.ShowDialog(err.Error(), cui.DialogTypeError)
 		return
 	}
 
-	cui.GetChatUi().SpeakBroadcast(formatSpeakContent(data))
+	cui.GetChatUi().SpeakBroadcast(formatSpeakContent(d))
 }
 
-func RoomListRes(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.RoomListRes
-	err := packet.DecodeData(&data)
+func RoomListRes(session zNet.Session, protoId int32, data []byte) {
+	//var data proto.RoomListRes
+	var d proto.RoomListRes
+	err := json.Unmarshal(data, &d)
 	if err != nil {
 		return
 	}
 
-	if data.Code != proto.ErrNil {
-		cui.ShowDialog(data.Message, cui.DialogTypeError)
+	if d.Code != proto.ErrNil {
+		cui.ShowDialog(d.Message, cui.DialogTypeError)
 		return
 	}
 
 	var list []string
 	list = append(list, "\t\tid\t\t\tname")
-	for _, v := range data.RoomList {
+	for _, v := range d.RoomList {
 		list = append(list, fmt.Sprintf("\t\t%d\t\t\t%s", v.Id, v.Name))
 	}
 	cui.ShowRoomUi(list)
 }
 
-func RoomPlayerListRes(session *zNet.Session, packet *zNet.NetPacket) {
-	var data proto.RoomPlayerListRes
-	err := packet.DecodeData(&data)
+func RoomPlayerListRes(session zNet.Session, protoId int32, data []byte) {
+	//var data proto.RoomPlayerListRes
+	var d proto.RoomPlayerListRes
+	err := json.Unmarshal(data, &d)
+	//err := packet.DecodeData(&data)
 	if err != nil {
 		return
 	}
 
-	if data.Code != proto.ErrNil {
-		cui.ShowDialog(data.Message, cui.DialogTypeError)
+	if d.Code != proto.ErrNil {
+		cui.ShowDialog(d.Message, cui.DialogTypeError)
 		return
 	}
 
 	var list []string
-	for _, v := range data.RoomPlayerList {
+	for _, v := range d.RoomPlayerList {
 		list = append(list, v.Name)
 	}
 
@@ -164,4 +193,14 @@ func formatSpeakContent(data proto.ChatMessage) string {
 	}
 
 	return str
+}
+
+func TestPingRes(session zNet.Session, protoId int32, data []byte) {
+	var d proto.TestPingRes
+	err := json.Unmarshal(data, &d)
+	if err != nil {
+		return
+	}
+
+	cui.GetChatUi().SpeakBroadcast(fmt.Sprintf("==========ping====%s", time.Now().Sub(d.Time).String()))
 }

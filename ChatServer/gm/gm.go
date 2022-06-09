@@ -1,6 +1,7 @@
 package gm
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ import (
 	"github.com/pzqf/zUtil/zTime"
 )
 
-func Process(session *zNet.Session, content string) {
+func Process(session zNet.Session, content string) {
 	resData := proto.PlayerSpeakRes{
 		Code:    0,
 		Message: "success",
@@ -22,7 +23,9 @@ func Process(session *zNet.Session, content string) {
 	if err != nil {
 		resData.Code = 2
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerSpeak, resData)
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerSpeak, d)
+		//_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
@@ -41,7 +44,9 @@ func Process(session *zNet.Session, content string) {
 	case "/stats":
 		if len(wordList) < 2 {
 			msg.Content = "please input player name"
-			_ = session.Send(proto.SpeakBroadcast, msg)
+			d, _ := json.Marshal(msg)
+			_ = session.Send(proto.SpeakBroadcast, d)
+			//_ = session.Send(proto.SpeakBroadcast, msg)
 			return
 		}
 
@@ -50,19 +55,22 @@ func Process(session *zNet.Session, content string) {
 		otherPlayer := playerMgr.GetPlayerByName(playerName)
 		if p == nil {
 			msg.Content = "player not online"
-			_ = session.Send(proto.SpeakBroadcast, msg)
+			d, _ := json.Marshal(msg)
+			_ = session.Send(proto.SpeakBroadcast, d)
 			return
 		}
 
 		msg.Content = fmt.Sprintf("GM: player:%s, login time:%s, online:%s, room id:%d", playerName,
 			zTime.Time2String(otherPlayer.LoginTime), time.Now().Sub(otherPlayer.LoginTime).String(), otherPlayer.RoomId)
 
-		_ = session.Send(proto.SpeakBroadcast, msg)
+		d, _ := json.Marshal(msg)
+		_ = session.Send(proto.SpeakBroadcast, d)
 
 	case "/popular":
 		if len(wordList) < 2 {
 			msg.Content = "please input room id"
-			_ = session.Send(proto.SpeakBroadcast, msg)
+			d, _ := json.Marshal(msg)
+			_ = session.Send(proto.SpeakBroadcast, d)
 			return
 		}
 
@@ -71,21 +79,25 @@ func Process(session *zNet.Session, content string) {
 		roomId, err := strconv.Atoi(roomIdStr)
 		if err != nil {
 			msg.Content = "room id wrong"
-			_ = session.Send(proto.SpeakBroadcast, msg)
+			d, _ := json.Marshal(msg)
+			_ = session.Send(proto.SpeakBroadcast, d)
 			return
 		}
 
 		roomInfo, err := room.GetRoom(int32(roomId))
 		if err != nil {
 			msg.Content = "can't find the room"
-			_ = session.Send(proto.SpeakBroadcast, msg)
+			d, _ := json.Marshal(msg)
+			_ = session.Send(proto.SpeakBroadcast, d)
 			return
 		}
 
 		msg.Content = fmt.Sprintf("GM: %s ", roomInfo.GetHighWord())
-		_ = session.Send(proto.SpeakBroadcast, msg)
+		d, _ := json.Marshal(msg)
+		_ = session.Send(proto.SpeakBroadcast, d)
 	default:
 		msg.Content = fmt.Sprintf("GM: can't find command %s ", command)
-		_ = session.Send(proto.SpeakBroadcast, msg)
+		d, _ := json.Marshal(msg)
+		_ = session.Send(proto.SpeakBroadcast, d)
 	}
 }

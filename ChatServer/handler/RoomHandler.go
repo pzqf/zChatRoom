@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"zChatRoom/ChatServer/room"
 	"zChatRoom/proto"
 
@@ -16,7 +17,7 @@ func RegisterRoomHandler() error {
 	return nil
 }
 
-func RoomList(session *zNet.Session, packet *zNet.NetPacket) {
+func RoomList(session zNet.Session, protoId int32, data []byte) {
 	resData := proto.RoomListRes{
 		Code:    0,
 		Message: "success",
@@ -25,7 +26,8 @@ func RoomList(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrRoomList
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLogin, resData)
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.RoomList, d)
 	}
 	for _, v := range roomList {
 		roomInfo := proto.RoomInfo{
@@ -34,6 +36,6 @@ func RoomList(session *zNet.Session, packet *zNet.NetPacket) {
 		}
 		resData.RoomList = append(resData.RoomList, roomInfo)
 	}
-
-	_ = session.Send(proto.RoomList, resData)
+	d, _ := json.Marshal(resData)
+	_ = session.Send(proto.RoomList, d)
 }

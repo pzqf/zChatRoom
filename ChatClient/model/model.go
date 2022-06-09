@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
 	"zChatRoom/proto"
 
@@ -16,9 +17,13 @@ func Init(tcpClient *zNet.TcpClient) {
 }
 
 func Login(username string) {
-	err := client.Send(proto.PlayerLogin, &proto.PlayerLoginReq{
+	data, err := json.Marshal(proto.PlayerLoginReq{
 		UserName: username,
 	})
+	if err != nil {
+		return
+	}
+	err = client.Send(proto.PlayerLogin, data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -26,9 +31,10 @@ func Login(username string) {
 }
 
 func SelectRoom(roomId int32) {
-	err := client.Send(proto.PlayerEnterRoom, &proto.PlayerEnterRoomReq{
+	data, err := json.Marshal(proto.PlayerEnterRoomReq{
 		RoomId: roomId,
 	})
+	err = client.Send(proto.PlayerEnterRoom, data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -36,9 +42,10 @@ func SelectRoom(roomId int32) {
 }
 
 func Speak(content string) {
-	err := client.Send(proto.PlayerSpeak, &proto.PlayerSpeakReq{
+	data, err := json.Marshal(proto.PlayerSpeakReq{
 		Content: content,
 	})
+	err = client.Send(proto.PlayerSpeak, data)
 	if err != nil {
 		fmt.Println(err)
 		return

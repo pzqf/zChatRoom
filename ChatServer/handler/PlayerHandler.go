@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"sort"
 	"strings"
@@ -47,17 +49,20 @@ func RegisterPlayerHandler() error {
 	return nil
 }
 
-func PlayerLogin(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLogin(session zNet.Session, protoId int32, data []byte) {
 	var reqData proto.PlayerLoginReq
 	resData := proto.PlayerLoginRes{
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
-	err := packet.DecodeData(&reqData)
+	fmt.Println(string(data))
+	err := json.Unmarshal(data, &reqData)
+	//err := packet.DecodeData(&reqData)
 	if err != nil {
 		resData.Code = proto.RrrLogin
-		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLogin, resData)
+		resData.Message = err.Error() + "ddddddd"
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerLogin, d)
 		return
 	}
 
@@ -65,13 +70,14 @@ func PlayerLogin(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.RrrLogin
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLogin, resData)
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerLogin, d)
 		return
 	}
 
 	newPlayer := player.Player{
 		Id:        uuid.NewV4().String(),
-		Session:   session,
+		Session:   session.(*zNet.TcpServerSession),
 		Name:      reqData.UserName,
 		LoginTime: time.Now(),
 	}
@@ -79,23 +85,26 @@ func PlayerLogin(session *zNet.Session, packet *zNet.NetPacket) {
 
 	zLog.Info("Add new Player", zap.String("id", newPlayer.Id))
 
-	_ = session.Send(proto.PlayerLogin, resData)
+	d, _ := json.Marshal(resData)
+	_ = session.Send(proto.PlayerLogin, d)
 
-	RoomList(session, nil)
+	RoomList(session, proto.RoomList, nil)
 
 }
 
-func PlayerLogout(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLogout(session zNet.Session, protoId int32, data []byte) {
 	resData := proto.PlayerLogoutRes{
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
+	//si := session.(*zNet.TcpServerSession)
 
 	p, err := playerMgr.GetPlayerBySid(session.GetSid())
 	if err != nil {
 		resData.Code = proto.RrrLogout
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerEnterRoom, resData)
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerLogout, d)
 		return
 	}
 
@@ -106,21 +115,26 @@ func PlayerLogout(session *zNet.Session, packet *zNet.NetPacket) {
 		}
 		p.RoomId = 0
 	}
-	_ = session.Send(proto.PlayerEnterRoom, resData)
+	d, _ := json.Marshal(resData)
+	_ = session.Send(proto.PlayerLogout, d)
 }
 
-func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerEnterRoom(session zNet.Session, protoId int32, data []byte) {
 	var reqData proto.PlayerEnterRoomReq
 	resData := proto.PlayerEnterRoomRes{
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
+	defer func() {
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerEnterRoom, d)
+	}()
 
-	err := packet.DecodeData(&reqData)
+	//err := packet.DecodeData(&reqData)
+	err := json.Unmarshal(data, &reqData)
 	if err != nil {
 		resData.Code = proto.ErrEnterRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerEnterRoom, resData)
 		return
 	}
 
@@ -128,7 +142,6 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrEnterRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerEnterRoom, resData)
 		return
 	}
 
@@ -144,7 +157,6 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrEnterRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerEnterRoom, resData)
 		return
 	}
 
@@ -152,7 +164,6 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrEnterRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerEnterRoom, resData)
 		return
 	}
 
@@ -165,7 +176,6 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 		return resData.ChatHistoryList[i].Time < resData.ChatHistoryList[j].Time
 	})
 
-	_ = session.Send(proto.PlayerEnterRoom, resData)
 	//fmt.Println("玩家", p.Name, "进入房间", reqData.RoomId, "成功")
 	zLog.Info("Player enter room", zap.String("id", p.Id), zap.String("name", p.Name), zap.Int32("room_id", reqData.RoomId))
 
@@ -173,24 +183,26 @@ func PlayerEnterRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	//r.UpdateRoomPlayerList()
 }
 
-func PlayerLeaveRoom(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerLeaveRoom(session zNet.Session, protoId int32, data []byte) {
 	resData := proto.PlayerLeaveRoomRes{
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
+	defer func() {
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerLeaveRoom, d)
+	}()
 
 	p, err := playerMgr.GetPlayerBySid(session.GetSid())
 	if err != nil {
 		resData.Code = proto.ErrLeaveRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLeaveRoom, resData)
 		return
 	}
 
 	if p.RoomId == 0 {
 		resData.Code = proto.ErrLeaveRoom
 		resData.Message = "not in any room"
-		_ = session.Send(proto.PlayerLeaveRoom, resData)
 		return
 	}
 
@@ -198,35 +210,35 @@ func PlayerLeaveRoom(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrLeaveRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLeaveRoom, resData)
 		return
 	}
 	err = r.DelPlayer(p.Id)
 	if err != nil {
 		resData.Code = proto.ErrLeaveRoom
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerLeaveRoom, resData)
 		return
 	}
 	p.RoomId = 0
 
-	_ = session.Send(proto.PlayerLeaveRoom, resData)
-
 	//r.UpdateRoomPlayerList()
 }
 
-func PlayerSpeak(session *zNet.Session, packet *zNet.NetPacket) {
+func PlayerSpeak(session zNet.Session, protoId int32, data []byte) {
 	var reqData proto.PlayerSpeakReq
 	resData := proto.PlayerSpeakRes{
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
-	err := packet.DecodeData(&reqData)
+	defer func() {
+		d, _ := json.Marshal(resData)
+		_ = session.Send(proto.PlayerSpeak, d)
+	}()
+	//err := packet.DecodeData(&reqData)
+	err := json.Unmarshal(data, &reqData)
 	if err != nil {
 		log.Println("receives speak", reqData.Content, time.Now())
 		resData.Code = proto.ErrSpeak
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
@@ -234,14 +246,12 @@ func PlayerSpeak(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrSpeak
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
 	if p.RoomId == 0 {
 		resData.Code = proto.ErrSpeak
 		resData.Message = "not in any chat room"
-		_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
@@ -249,12 +259,10 @@ func PlayerSpeak(session *zNet.Session, packet *zNet.NetPacket) {
 	if err != nil {
 		resData.Code = proto.ErrSpeak
 		resData.Message = err.Error()
-		_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
 	if reqData.Content == "" {
-		_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 

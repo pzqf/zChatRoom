@@ -9,11 +9,13 @@ import (
 type Player struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
-	Session   *zNet.Session
+	Session   *zNet.TcpServerSession
 	RoomId    int32
 	LoginTime time.Time
 }
 
+/*
 func (p *Player) SendData(protoId int32, msg interface{}) error {
 	return p.Session.Send(protoId, msg)
 }
+*/

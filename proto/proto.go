@@ -1,5 +1,7 @@
 package proto
 
+import "time"
+
 const (
 	PlayerLogin     = 1001
 	PlayerLogout    = 1002
@@ -10,6 +12,8 @@ const (
 
 	RoomList       = 2001
 	RoomPlayerList = 2002
+
+	TestPing = 3001
 )
 
 type PlayerLoginReq struct {
@@ -81,4 +85,16 @@ type RoomPlayerListRes struct {
 	Code           int32            `json:"err_code"`
 	Message        string           `json:"message"`
 	RoomPlayerList []RoomPlayerInfo `json:"room_player_list"`
+}
+
+type TestPingReq struct {
+	Id   int32     `json:"id"`
+	Name string    `json:"name"`
+	Time time.Time `json:"time"`
+}
+
+type TestPingRes struct {
+	Id   int32     `json:"id"`
+	Name string    `json:"name"`
+	Time time.Time `json:"time"`
 }
