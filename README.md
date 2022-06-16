@@ -28,7 +28,7 @@ make linux
 
 ### 运行
 
-通信使用的是9106端口。
+通信使用的是9160端口。
 
 #### 服务端
 将敏感词文件keyword.txt,及分词文件dictionary.txt放于bin目录下。然后直接运行
