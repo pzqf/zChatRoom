@@ -31,7 +31,7 @@ func RoomList(session zNet.Session, protoId int32, data []byte) {
 	}
 	for _, v := range roomList {
 		roomInfo := proto.RoomInfo{
-			Id:   v.Id,
+			Id:   v.GetId().(room.RoomIdType),
 			Name: v.Name,
 		}
 		resData.RoomList = append(resData.RoomList, roomInfo)

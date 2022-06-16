@@ -11,6 +11,8 @@ import (
 	"zChatRoom/ChatServer/segmenter"
 	"zChatRoom/proto"
 
+	"github.com/pzqf/zEngine/zObject"
+
 	"github.com/pzqf/zUtil/zList"
 
 	"github.com/pzqf/zUtil/zMap"
@@ -20,18 +22,21 @@ import (
 const maxHistoryChatCount = 50
 
 type Room struct {
-	Id               int32  `json:"id"`
+	//Id               int32  `json:"id"`
+	zObject.Object
 	Name             string `json:"name"`
 	PlayerList       zMap.Map
 	HistoryChatQueue zQueue.Queue
 	wordCount        zMap.Map
 }
 
-func NewRoom(id int32) *Room {
+type RoomIdType = int32
+
+func NewRoom(id RoomIdType) *Room {
 	r := &Room{
-		Id:   id,
 		Name: fmt.Sprintf("room_%d", id),
 	}
+	r.SetId(id)
 	ticker := time.NewTicker(60 * time.Second)
 	go func() {
 		for range ticker.C {
@@ -60,9 +65,7 @@ func NewRoom(id int32) *Room {
 }
 
 func (r *Room) AddPlayer(p *player.Player) error {
-	r.PlayerList.Store(p.Id, p)
-	//r.UpdateRoomPlayerList()
-
+	r.PlayerList.Store(p.GetId(), p)
 	return nil
 }
 
@@ -73,7 +76,6 @@ func (r *Room) DelPlayer(uid string) error {
 	}
 	name := p.(*player.Player).Name
 	r.PlayerList.Delete(uid)
-	//r.UpdateRoomPlayerList()
 	log.Println("player", name, "left", r.Name, r.Id)
 	chatMsg := proto.ChatMessage{
 		Content: name + " left room",
@@ -101,7 +103,7 @@ func (r *Room) UpdateRoomPlayerList() {
 	r.PlayerList.Range(func(key, value interface{}) bool {
 		p := value.(*player.Player)
 		resPlayerData.RoomPlayerList = append(resPlayerData.RoomPlayerList, proto.RoomPlayerInfo{
-			Id:   p.Id,
+			Id:   p.Id.(string),
 			Name: p.Name,
 		})
 		return true
@@ -111,7 +113,6 @@ func (r *Room) UpdateRoomPlayerList() {
 		p := value.(*player.Player)
 		d, _ := json.Marshal(resPlayerData)
 		_ = p.Session.Send(proto.RoomPlayerList, d)
-		//_ = p.Session.Send(proto.RoomPlayerList, resPlayerData)
 		return true
 	})
 }
@@ -144,7 +145,6 @@ func (r *Room) BroadcastChatMsg(chatMsg proto.ChatMessage) {
 	r.PlayerList.Range(func(key, value interface{}) bool {
 		p := value.(*player.Player)
 		if p.Session != nil {
-			//p.Session.Send(proto.SpeakBroadcast, chatMsg)
 			d, _ := json.Marshal(chatMsg)
 			_ = p.Session.Send(proto.SpeakBroadcast, d)
 		}

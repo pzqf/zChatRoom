@@ -25,7 +25,6 @@ func Process(session zNet.Session, content string) {
 		resData.Message = err.Error()
 		d, _ := json.Marshal(resData)
 		_ = session.Send(proto.PlayerSpeak, d)
-		//_ = session.Send(proto.PlayerSpeak, resData)
 		return
 	}
 
@@ -46,7 +45,6 @@ func Process(session zNet.Session, content string) {
 			msg.Content = "please input player name"
 			d, _ := json.Marshal(msg)
 			_ = session.Send(proto.SpeakBroadcast, d)
-			//_ = session.Send(proto.SpeakBroadcast, msg)
 			return
 		}
 

@@ -23,5 +23,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 )
 
-//replace github.com/pzqf/zEngine => ../zEngine
-//replace github.com/pzqf/zUtil => ../zUtil
+replace github.com/pzqf/zEngine => ../zEngine
+
+replace github.com/pzqf/zUtil => ../zUtil

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"sync/atomic"
 
-	"github.com/pzqf/zUtil/zMap"
+	"github.com/pzqf/zEngine/zObject"
 )
 
 type Mgr struct {
-	RoomList     zMap.Map
+	zObject.ObjectManager
 	MaxRoomCount int32
 	roomIdIndex  int32
 }
@@ -32,31 +32,30 @@ func InitDefaultRoomMgr(maxRoomCount int32) {
 }
 
 func (m *Mgr) AddRoom() (*Room, error) {
-	if m.RoomList.Len() >= m.MaxRoomCount {
+	if m.GetObjectsCount() >= m.MaxRoomCount {
 		return nil, errors.New("room count over max")
 	}
 
 	id := atomic.AddInt32(&m.roomIdIndex, 1)
 	newRoom := NewRoom(id)
-	m.RoomList.Store(newRoom.Id, newRoom)
+	_ = m.AddObject(newRoom.Id, newRoom)
 
 	return newRoom, nil
 }
 
 func GetRoomList() ([]*Room, error) {
 	var list []*Room
-	DefaultMgr.RoomList.Range(func(key, value interface{}) bool {
+	DefaultMgr.ObjectsRange(func(key, value interface{}) bool {
 		list = append(list, value.(*Room))
 		return true
 	})
-
 	return list, nil
 }
 
-func GetRoom(roomId int32) (*Room, error) {
+func GetRoom(roomId RoomIdType) (*Room, error) {
 	var r *Room
-	DefaultMgr.RoomList.Range(func(key, value interface{}) bool {
-		if value.(*Room).Id == roomId {
+	DefaultMgr.ObjectsRange(func(key, value interface{}) bool {
+		if key.(RoomIdType) == roomId {
 			r = value.(*Room)
 			return false
 		}

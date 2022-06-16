@@ -8,6 +8,9 @@ import (
 )
 
 func Init() error {
+
+	zNet.InitDispatcherWorkerPool(10000)
+
 	err := RegisterPlayerHandler()
 	if err != nil {
 		return err

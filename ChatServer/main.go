@@ -52,6 +52,14 @@ func main() {
 	maxRoomCount := int32(50)
 	room.InitDefaultRoomMgr(maxRoomCount)
 	zLog.Info("room manager init success", zap.Int32("maxRoomCount", maxRoomCount))
+
+	err = handler.Init()
+	if err != nil {
+		zLog.Error("RegisterHandler error %d", zap.Error(err))
+		return
+	}
+	zLog.Info("handler init success")
+
 	netCfg := zNet.Config{
 		MaxPacketDataSize: zNet.DefaultPacketDataSize,
 		ListenAddress:     fmt.Sprintf(":%d", 9160),
@@ -66,19 +74,11 @@ func main() {
 		zap.Int32("MaxNetPacketDataSize", zNet.DefaultPacketDataSize),
 	)
 
-	err = handler.Init()
-	if err != nil {
-		zLog.Error("RegisterHandler error %d", zap.Error(err))
-		return
-	}
-	zLog.Info("handler init success")
-
 	err = zNet.GetTcpServerDefault().Start()
 	if err != nil {
 		zLog.Error("start tcp server error", zap.Error(err))
 		return
 	}
-	//zLog.Info("Tcp server listing on", zap.Int("port", 9106))
 
 	zSignal.GracefulExit()
 	zLog.Info("server will be shutdown")

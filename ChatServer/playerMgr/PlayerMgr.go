@@ -7,13 +7,13 @@ import (
 	"zChatRoom/ChatServer/player"
 	"zChatRoom/ChatServer/room"
 
-	"github.com/pzqf/zEngine/zNet"
+	"github.com/pzqf/zEngine/zObject"
 
-	"github.com/pzqf/zUtil/zMap"
+	"github.com/pzqf/zEngine/zNet"
 )
 
 type Mgr struct {
-	PlayerList zMap.Map
+	zObject.ObjectManager
 }
 
 var mgr *Mgr
@@ -22,7 +22,7 @@ func InitDefaultPlayerMgr() {
 	mgr = &Mgr{}
 	go func() {
 		for true {
-			fmt.Println(time.Now(), "online player count:", mgr.PlayerList.Len())
+			fmt.Println(time.Now(), "online player count:", mgr.GetObjectsCount())
 			time.Sleep(time.Second * 5)
 		}
 	}()
@@ -30,7 +30,7 @@ func InitDefaultPlayerMgr() {
 
 func CheckPlayerName(name string) error {
 	find := false
-	mgr.PlayerList.Range(func(key, value interface{}) bool {
+	mgr.ObjectsRange(func(key, value interface{}) bool {
 		playerInfo := value.(*player.Player)
 		if playerInfo.Name == name {
 			find = true
@@ -50,14 +50,17 @@ func GetDefaultMgr() *Mgr {
 }
 
 func AddPlayer(p *player.Player) {
-	mgr.PlayerList.Store(p.Id, p)
+	err := mgr.AddObject(p.Id, p)
+	if err != nil {
+		return
+	}
 
-	fmt.Println("添加玩家", p.Name, "成功，当前玩家总数:", mgr.PlayerList.Len())
+	fmt.Println("添加玩家", p.Name, "成功，当前玩家总数:", mgr.GetObjectsCount())
 }
 
 func GetPlayerBySid(sid zNet.SessionIdType) (*player.Player, error) {
 	var p *player.Player
-	mgr.PlayerList.Range(func(key, value interface{}) bool {
+	mgr.ObjectsRange(func(key, value interface{}) bool {
 		playerInfo := value.(*player.Player)
 		if playerInfo.Session.GetSid() == sid {
 			p = playerInfo
@@ -74,7 +77,7 @@ func GetPlayerBySid(sid zNet.SessionIdType) (*player.Player, error) {
 
 func GetPlayerByName(playerName string) *player.Player {
 	var p *player.Player
-	mgr.PlayerList.Range(func(key, value interface{}) bool {
+	mgr.ObjectsRange(func(key, value interface{}) bool {
 		playerInfo := value.(*player.Player)
 		if playerInfo.Name == playerName {
 			p = playerInfo
@@ -86,7 +89,7 @@ func GetPlayerByName(playerName string) *player.Player {
 }
 
 func OnSessionClose(sid zNet.SessionIdType) {
-	mgr.PlayerList.Range(func(key, value interface{}) bool {
+	mgr.ObjectsRange(func(key, value interface{}) bool {
 		playerInfo := value.(*player.Player)
 		if playerInfo.Session.GetSid() != sid {
 			return true
@@ -97,12 +100,12 @@ func OnSessionClose(sid zNet.SessionIdType) {
 			if err != nil {
 				return false
 			}
-			err = r.DelPlayer(playerInfo.Id)
+			err = r.DelPlayer(playerInfo.Id.(string))
 			if err != nil {
 				return false
 			}
 		}
-		mgr.PlayerList.Delete(playerInfo.Id)
+		_ = mgr.RemoveObject(playerInfo.Id)
 		return false
 	})
 }

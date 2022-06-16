@@ -57,7 +57,6 @@ func PlayerLogin(session zNet.Session, protoId int32, data []byte) {
 	}
 	fmt.Println(string(data))
 	err := json.Unmarshal(data, &reqData)
-	//err := packet.DecodeData(&reqData)
 	if err != nil {
 		resData.Code = proto.RrrLogin
 		resData.Message = err.Error() + "ddddddd"
@@ -76,14 +75,14 @@ func PlayerLogin(session zNet.Session, protoId int32, data []byte) {
 	}
 
 	newPlayer := player.Player{
-		Id:        uuid.NewV4().String(),
 		Session:   session.(*zNet.TcpServerSession),
 		Name:      reqData.UserName,
 		LoginTime: time.Now(),
 	}
+	newPlayer.SetId(uuid.NewV4().String())
 	playerMgr.AddPlayer(&newPlayer)
 
-	zLog.Info("Add new Player", zap.String("id", newPlayer.Id))
+	zLog.Info("Add new Player", zap.Any("id", newPlayer.GetId()))
 
 	d, _ := json.Marshal(resData)
 	_ = session.Send(proto.PlayerLogin, d)
@@ -97,7 +96,6 @@ func PlayerLogout(session zNet.Session, protoId int32, data []byte) {
 		Code:    proto.ErrNil,
 		Message: "success",
 	}
-	//si := session.(*zNet.TcpServerSession)
 
 	p, err := playerMgr.GetPlayerBySid(session.GetSid())
 	if err != nil {
@@ -111,7 +109,7 @@ func PlayerLogout(session zNet.Session, protoId int32, data []byte) {
 	if p.RoomId != 0 {
 		r, err := room.GetRoom(p.RoomId)
 		if err != nil {
-			_ = r.DelPlayer(p.Id)
+			_ = r.DelPlayer(p.GetId().(string))
 		}
 		p.RoomId = 0
 	}
@@ -130,7 +128,6 @@ func PlayerEnterRoom(session zNet.Session, protoId int32, data []byte) {
 		_ = session.Send(proto.PlayerEnterRoom, d)
 	}()
 
-	//err := packet.DecodeData(&reqData)
 	err := json.Unmarshal(data, &reqData)
 	if err != nil {
 		resData.Code = proto.ErrEnterRoom
@@ -148,7 +145,7 @@ func PlayerEnterRoom(session zNet.Session, protoId int32, data []byte) {
 	if p.RoomId != 0 {
 		r, err := room.GetRoom(reqData.RoomId)
 		if err != nil {
-			_ = r.DelPlayer(p.Id)
+			_ = r.DelPlayer(p.GetId().(string))
 		}
 		p.RoomId = 0
 	}
@@ -175,12 +172,7 @@ func PlayerEnterRoom(session zNet.Session, protoId int32, data []byte) {
 	sort.Slice(resData.ChatHistoryList, func(i, j int) bool {
 		return resData.ChatHistoryList[i].Time < resData.ChatHistoryList[j].Time
 	})
-
-	//fmt.Println("玩家", p.Name, "进入房间", reqData.RoomId, "成功")
-	zLog.Info("Player enter room", zap.String("id", p.Id), zap.String("name", p.Name), zap.Int32("room_id", reqData.RoomId))
-
-	time.Sleep(10 * time.Millisecond)
-	//r.UpdateRoomPlayerList()
+	zLog.Info("Player enter room", zap.Any("id", p.GetId()), zap.String("name", p.Name), zap.Int32("room_id", reqData.RoomId))
 }
 
 func PlayerLeaveRoom(session zNet.Session, protoId int32, data []byte) {
@@ -212,15 +204,13 @@ func PlayerLeaveRoom(session zNet.Session, protoId int32, data []byte) {
 		resData.Message = err.Error()
 		return
 	}
-	err = r.DelPlayer(p.Id)
+	err = r.DelPlayer(p.GetId().(string))
 	if err != nil {
 		resData.Code = proto.ErrLeaveRoom
 		resData.Message = err.Error()
 		return
 	}
 	p.RoomId = 0
-
-	//r.UpdateRoomPlayerList()
 }
 
 func PlayerSpeak(session zNet.Session, protoId int32, data []byte) {
@@ -233,7 +223,7 @@ func PlayerSpeak(session zNet.Session, protoId int32, data []byte) {
 		d, _ := json.Marshal(resData)
 		_ = session.Send(proto.PlayerSpeak, d)
 	}()
-	//err := packet.DecodeData(&reqData)
+
 	err := json.Unmarshal(data, &reqData)
 	if err != nil {
 		log.Println("receives speak", reqData.Content, time.Now())
@@ -275,7 +265,7 @@ func PlayerSpeak(session zNet.Session, protoId int32, data []byte) {
 	content = zKeyWordFilter.Filter(reqData.Content)
 
 	msg := proto.ChatMessage{
-		Uid:     p.Id,
+		Uid:     p.GetId().(string),
 		Name:    p.Name,
 		Time:    time.Now().Unix(),
 		Content: content,
