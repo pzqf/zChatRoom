@@ -9,8 +9,7 @@ import (
 )
 
 type Player struct {
-	//Id        string `json:"id"`
-	zObject.Object
+	zObject.BaseObject
 	Name      string `json:"name"`
 	Session   *zNet.TcpServerSession
 	RoomId    int32

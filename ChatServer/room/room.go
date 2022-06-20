@@ -22,8 +22,7 @@ import (
 const maxHistoryChatCount = 50
 
 type Room struct {
-	//Id               int32  `json:"id"`
-	zObject.Object
+	zObject.BaseObject
 	Name             string `json:"name"`
 	PlayerList       zMap.Map
 	HistoryChatQueue zQueue.Queue
